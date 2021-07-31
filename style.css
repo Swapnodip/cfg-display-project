@@ -1,0 +1,50 @@
+body {
+  font-family: arial;
+  font-size: 16px;
+}
+
+.menu {
+  float: left;
+  width: 20%;
+  height: 95%;
+  padding-top: 25px;
+}
+
+.graph {
+  float: right;
+  height: 99%;
+  width: calc(80% - 4px);
+  border: 2px solid black;
+  border-radius: 5px;
+}
+
+button {
+  height: 30px;
+  padding: 4px;
+  margin: 6px;
+  font-size: 16;
+  cursor: pointer;
+}
+
+#node_data {
+  border: 1px solid black;
+  font-size: 16;
+  font-family: arial;
+  width: 85%;
+  height: 60%;
+  padding: 10px;
+  border-radius: 3px;
+  overflow: auto;
+  margin-left: 2%;
+}
+
+#data_option {
+  margin: 6px;
+  font-size: 16;
+  width: 100px
+}
+
+hr {
+  width:90%;
+  margin:10 0 10 0
+}

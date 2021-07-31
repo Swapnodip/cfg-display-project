@@ -1,0 +1,39 @@
+<!DOCTYPE>
+
+<html>
+
+<head>
+  <title>Graph</title>
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <link href="./utility/cytoscape.js-navigator.css" rel="stylesheet" type="text/css" />
+  <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+  <script src="https://unpkg.com/layout-base/layout-base.js"></script>
+  <script src="./utility/cytoscape-expand-collapse.js"></script>
+  <script src="https://unpkg.com/dagre@0.7.4/dist/dagre.js"></script>
+  <script src="./utility/cytoscape-dagre.js"></script>
+  <script src="./utility/cytoscape-navigator.js"></script>
+</head>
+
+<body>
+  <div class="menu">
+    <button id="expand">Expand all</button>
+    <button id="collapse">Collapse all</button>
+    <br>
+    <hr>
+    <button id="group">Create group</button>
+    <hr>
+    <label to:"data_option">Show:</label>
+    <select id="data_option">
+      <option value="name">Name</option>
+      <option value="label">Label</option>
+    </select>
+    <pre id=node_data></pre>
+  </div>
+  <div class="graph" id="cy"></div>
+  <script type="module" src="app.js"></script>
+</body>
+
+</html>
