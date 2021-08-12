@@ -1,4 +1,32 @@
-import data from "./data.js"
+async function start()
+{
+let raw;
+await fetch(
+  './json/DMX2Alloc_ch_79_ajtg.json'
+  //'./json/Linefit_ccp_28_ajtg.json'
+  )
+.then(response => {
+	return response.json()
+})
+.then(data => {raw=data})
+//console.log(raw)
+let nodes=raw.objects.map(node=>({"data":{"id":"n"+node._gvid, "name":node.name, "label":node.label, "colour":node.label.substring(16,23)},"group":"nodes"}))
+let edges=raw.edges.map(edge=>({"data":{"id":"e"+edge._gvid, "source":"n"+edge.tail, "target":"n"+edge.head},"group":"edges"}))
+let gcount=0
+nodes.push({"data":{"id":"g0","name":"group0", "label":"parent group", "colour":nodes[0].data.colour}, "group":"nodes"})
+nodes[0].data.parent="g0"
+raw.edges.forEach(e => {
+	if(nodes[e.tail].data.colour==nodes[e.head].data.colour)
+	{
+		nodes[e.head].data.parent=nodes[e.tail].data.parent
+	}
+	else
+	{
+		gcount=gcount+1
+		nodes.push({"data":{"id":"g"+gcount,"name":"group"+gcount, "label":"parent group", "colour":nodes[e.head].data.colour}, "group":"nodes"})
+		nodes[e.head].data.parent="g"+gcount
+	}
+})
 
 var cy = cytoscape({
     container: document.getElementById("cy"),
@@ -58,7 +86,7 @@ var cy = cytoscape({
       }
     ],
 
-    elements: data.nodes.concat(data.edges)
+    elements: nodes.concat(edges)
 });
 
   var api = cy.expandCollapse({
@@ -107,8 +135,6 @@ var cy = cytoscape({
     text.innerHTML=selected.data(parameter)?selected.data(parameter):""
   });
 
-  var g=parseInt(data.nodes[data.nodes.length-1].data.id.substring(1))+1
-
   document.getElementById("group").addEventListener("click", ()=>{
     const members=cy.nodes(":selected")
     if(members.length==0)
@@ -118,14 +144,17 @@ var cy = cytoscape({
     members.forEach(n => {
       if(n.data("parent")!=oldparent)
       {
-        alert("Cannot make group")
+        if(valid)alert("Cannot make group")
         valid=false
         return
       }
     });
     if(!valid)
     return
-    cy.add({"data":{"id":"g"+g,"name":"group"+g, "label":"parent group", "colour":members[0].data("colour"), "parent":oldparent}})
-    members.move({parent:"g"+g})
-    g=g+1
+    gcount=gcount+1
+    cy.add({"data":{"id":"g"+gcount,"name":"group"+gcount, "label":"parent group", "colour":members[0].data("colour"), "parent":oldparent}})
+    members.move({parent:"g"+gcount})
   });
+}
+
+start();
