@@ -19,16 +19,18 @@ body {
 }
 
 button {
-  height: 30px;
   padding: 4px;
-  margin: 6px;
-  font-size: 16;
+  margin: 5px;
+  font-size: 15;
   cursor: pointer;
+}
+label {
+  margin-left: 5px;
 }
 
 #node_data {
   border: 1px solid black;
-  font-size: 16;
+  font-size: 15;
   font-family: arial;
   width: 85%;
   height: 60%;
@@ -39,9 +41,14 @@ button {
 }
 
 #data_option {
-  margin: 6px;
-  font-size: 16;
+  margin: 5px;
+  font-size: 15;
   width: 100px
+}
+
+#input_file {
+  font-size: 15;
+  margin: 5px;
 }
 
 hr {

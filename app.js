@@ -1,15 +1,29 @@
-async function start()
+var raw={};
+
+document.getElementById('input_file')
+            .addEventListener('change', function() {
+              
+            var fr=new FileReader();
+            fr.onload=function(){
+                raw=JSON.parse(fr.result);
+                start();
+            }
+            
+            if(this.files[0].type!="application/json")
+            alert("Please enter JSON file")
+            else
+            fr.readAsText(this.files[0]);
+        })
+
+
+function start()
 {
-let raw;
-await fetch(
-  './json/DMX2Alloc_ch_79_ajtg.json'
-  //'./json/Linefit_ccp_28_ajtg.json'
-  )
-.then(response => {
-	return response.json()
-})
-.then(data => {raw=data})
-//console.log(raw)
+//console.log(raw);
+if((!raw.objects)||(!raw.edges))
+{
+  alert("Data is in incorrect format")
+  return
+}
 let nodes=raw.objects.map(node=>({"data":{"id":"n"+node._gvid, "name":node.name, "label":node.label, "colour":node.label.substring(16,23)},"group":"nodes"}))
 let edges=raw.edges.map(edge=>({"data":{"id":"e"+edge._gvid, "source":"n"+edge.tail, "target":"n"+edge.head},"group":"edges"}))
 let gcount=0
@@ -156,5 +170,3 @@ var cy = cytoscape({
     members.move({parent:"g"+gcount})
   });
 }
-
-start();
