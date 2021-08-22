@@ -43,7 +43,7 @@ label {
 #data_option {
   margin: 5px;
   font-size: 15;
-  width: 100px
+  width: auto;
 }
 
 #input_file {

@@ -30,10 +30,15 @@
     <br>
     <label to="data_option">Show:</label>
     <select id="data_option">
-      <option value="name">Name</option>
-      <option value="label">Label</option>
+      <option value="equality_set">Equality set</option>
+      <option value="src">Source</option>
+      <option value="src_stronglylive_set">Source strongly live set</option>
+      <option value="src_pointsTo_set"> Source pointsTo set</option>
+      <option value="tgt">Target</option>
+      <option value="tgt_stronglylive_set">Target strongly live set</option>
+      <option value="tgt_pointsTo_set">Target pointsTo set</option>
     </select>
-    <pre id=node_data></pre>
+    <p id=node_data></p>
   </div>
   <div class="graph" id="cy"></div>
   <script src="app.js"></script>

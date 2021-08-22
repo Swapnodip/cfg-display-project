@@ -19,35 +19,73 @@ document.getElementById('input_file')
 function start()
 {
 //console.log(raw);
-if((!raw.objects)||(!raw.edges))
-{
-  alert("Data is in incorrect format")
-  return
-}
-let nodes=raw.objects.map(node=>({"data":{"id":"n"+node._gvid, "name":node.name, "label":node.label, "colour":node.label.substring(16,23)},"group":"nodes"}))
-let edges=raw.edges.map(edge=>({"data":{"id":"e"+edge._gvid, "source":"n"+edge.tail, "target":"n"+edge.head},"group":"edges"}))
+let nodes=raw.objects.map(node=>({"data":{"id":"n"+node._gvid, "colour":node.matching?"#00ff00":"#ff0000", "equality_set":node.equality_set, "src":node.src, "src_stronglylive_set":node.src_stronglylive_set, "src_pointsTo_set":node.src_pointsTo_set, "tgt":node.tgt, "tgt_stronglylive_set":node.tgt_stronglylive_set, "tgt_pointsTo_set":node.tgt_pointsTo_set},"group":"nodes"}))
+let edges=raw.edges.map(edge=>({"data":{"id":"e"+edge._gvid, "source":"n"+edge.tail, "target":"n"+edge.head, "colour":edge.color},"group":"edges"}))
 let gcount=0
 nodes.push({"data":{"id":"g0","name":"group0", "label":"parent group", "colour":nodes[0].data.colour}, "group":"nodes"})
 nodes[0].data.parent="g0"
 raw.edges.forEach(e => {
+  if(!(nodes[e.tail].data.parent&&nodes[e.head].data.parent))
+  {
 	if(nodes[e.tail].data.colour==nodes[e.head].data.colour)
 	{
-		nodes[e.head].data.parent=nodes[e.tail].data.parent
+    if(nodes[e.tail].data.parent)
+    {
+		  nodes[e.head].data.parent=nodes[e.tail].data.parent
+    }
+    else if(nodes[e.head].data.parent)
+    {
+      nodes[e.tail].data.parent=nodes[e.head].data.parent
+    }
+    else
+    {
+      gcount=gcount+1
+		  nodes.push({"data":{"id":"g"+gcount,"name":"group"+gcount, "label":"parent group", "colour":nodes[e.head].data.colour}, "group":"nodes"})
+		  nodes[e.head].data.parent="g"+gcount
+      nodes[e.tail].data.parent="g"+gcount
+    }
 	}
 	else
 	{
-		gcount=gcount+1
-		nodes.push({"data":{"id":"g"+gcount,"name":"group"+gcount, "label":"parent group", "colour":nodes[e.head].data.colour}, "group":"nodes"})
-		nodes[e.head].data.parent="g"+gcount
+    if(!nodes[e.head].data.parent)
+    {
+		  gcount=gcount+1
+		  nodes.push({"data":{"id":"g"+gcount,"name":"group"+gcount, "label":"parent group", "colour":nodes[e.head].data.colour}, "group":"nodes"})
+		  nodes[e.head].data.parent="g"+gcount
+    }
+    if(!nodes[e.tail].data.parent)
+    {
+      gcount=gcount+1
+		  nodes.push({"data":{"id":"g"+gcount,"name":"group"+gcount, "label":"parent group", "colour":nodes[e.tail].data.colour}, "group":"nodes"})
+		  nodes[e.tail].data.parent="g"+gcount
+    }
 	}
+}
 })
+
+//console.log(nodes)
 
 var cy = cytoscape({
     container: document.getElementById("cy"),
     layout: {
+      /*name:"breadthfirst",
+      directed: true*/
       name: "dagre",
       nodeSep: 100,
-      rankSep: 20
+      rankSep: 20,
+      /*edgeWeight: e=>{
+        console.log(e.source().position(),e.target().position());
+        if(e.source().position().y>e.target().position().y)
+        {
+          e.data("back",true)
+          return 0;
+        }
+        else
+        {
+          e.data("back",false)
+          return 1;
+        }
+      }*/
     },
     style: [
       {
@@ -55,7 +93,7 @@ var cy = cytoscape({
         style: {
           "background-color": "data(colour)",
           "text-valign":"center",
-          "content": "data(name)"
+          "content": "data(id)"
         }
       },
       {
@@ -78,10 +116,11 @@ var cy = cytoscape({
         selector: "edge",
         style: {
           "width": 2,
-          "line-color": "#000000",
-          "curve-style": "bezier",
+          "line-color": "data(colour)",
+          "curve-style": "bezier",//e=>(e.renderedSourceEndpoint().y>e.renderedTargetEndpoint().y?"taxi":"bezier"),
+          "taxi-direction": "horizontal",
           "target-arrow-shape": "triangle",
-          "target-arrow-color": "#000000"
+          "target-arrow-color": "data(colour)"
         }
       },
       {
@@ -109,7 +148,7 @@ var cy = cytoscape({
       nodeSep: 100,
       rankSep: 20,
       animate: true,
-      fit: true
+      fit: false
     },
     fisheye: true,
     animate: true,
