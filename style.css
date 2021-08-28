@@ -4,16 +4,16 @@ body {
 }
 
 .menu {
-  float: left;
+  float:inline-start;
   width: 20%;
-  height: 95%;
+  height: calc(100%-25px);
   padding-top: 25px;
 }
 
 .graph {
-  float: right;
+  float:left;
   height: 99%;
-  width: calc(80% - 4px);
+  width: calc(60% - 4px);
   border: 2px solid black;
   border-radius: 5px;
 }
@@ -28,19 +28,22 @@ label {
   margin-left: 5px;
 }
 
-#node_data {
+.node_data {
   border: 1px solid black;
   font-size: 15;
   font-family: arial;
   width: 85%;
-  height: 60%;
   padding: 10px;
   border-radius: 3px;
   overflow: auto;
   margin-left: 2%;
 }
 
-#data_option {
+#node_data1 {
+  height: 60%;
+}
+
+.data_option {
   margin: 5px;
   font-size: 15;
   width: auto;
@@ -54,4 +57,28 @@ label {
 hr {
   width:90%;
   margin:10 0 10 0
+}
+
+.menu2 {
+  padding-top: 315px;
+  float:inline-end;
+  width: 20%;
+  height: 50%;
+}
+
+#node_data2 {
+  height: 90%;
+}
+
+.zoom {
+  border: 1px solid black;
+  border-radius: 3px;
+  padding: 5px;
+  position: fixed;
+  background-color: transparent;
+  top: 4%;
+  right: 22%;
+  width: auto;
+  height: auto;
+  z-index: 999;
 }

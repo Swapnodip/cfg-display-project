@@ -73,19 +73,6 @@ var cy = cytoscape({
       name: "dagre",
       nodeSep: 100,
       rankSep: 20,
-      /*edgeWeight: e=>{
-        console.log(e.source().position(),e.target().position());
-        if(e.source().position().y>e.target().position().y)
-        {
-          e.data("back",true)
-          return 0;
-        }
-        else
-        {
-          e.data("back",false)
-          return 1;
-        }
-      }*/
     },
     style: [
       {
@@ -117,8 +104,8 @@ var cy = cytoscape({
         style: {
           "width": 2,
           "line-color": "data(colour)",
-          "curve-style": "bezier",//e=>(e.renderedSourceEndpoint().y>e.renderedTargetEndpoint().y?"taxi":"bezier"),
-          "taxi-direction": "horizontal",
+          "curve-style": e=>(e.sourceEndpoint().y>e.targetEndpoint().y?"unbundled-bezier":"bezier"),
+          "control-point-distances":"200 50 200",
           "target-arrow-shape": "triangle",
           "target-arrow-color": "data(colour)"
         }
@@ -163,8 +150,10 @@ var cy = cytoscape({
   });
 
 
-  var text=document.getElementById("node_data")
-  var dropdown=document.getElementById("data_option")
+  var text1=document.getElementById("node_data1")
+  var dropdown1=document.getElementById("data_option1")
+  var text2=document.getElementById("node_data2")
+  var dropdown2=document.getElementById("data_option2")
 
   document.getElementById("collapse").addEventListener("click", () => {
     api.collapseAll()
@@ -175,17 +164,35 @@ var cy = cytoscape({
     api.expandAll()
   });
 
-  var parameter=dropdown.value
-  var selected={}
+  document.getElementById("zoom_in").addEventListener("click", ()=>{
+    cy.zoom({level: cy.zoom()*2, renderedPosition:{x:(window.innerWidth*0.6/2), y:(window.innerHeight/2)}})
+  })
+
+  document.getElementById("zoom_out").addEventListener("click", ()=>{
+    cy.zoom({level: cy.zoom()*0.5, renderedPosition:{x:(window.innerWidth*0.6/2), y:(window.innerHeight/2)}})
+  })
+
+  var parameter1=dropdown1.value
+  var selected1={}
+  var parameter2=dropdown2.value
+  var selected2={}
+
 
   cy.on('tap', event=>{
-    text.innerHTML=event.target.data(parameter)?event.target.data(parameter):""
-    selected=event.target
+    text1.innerHTML=event.target.data(parameter1)?event.target.data(parameter1):""
+    selected1=event.target
+    text2.innerHTML=event.target.data(parameter2)?event.target.data(parameter2):""
+    selected2=event.target
   });
 
-  dropdown.addEventListener("change",event=>{
-    parameter=event.target.value
-    text.innerHTML=selected.data(parameter)?selected.data(parameter):""
+  dropdown1.addEventListener("change",event=>{
+    parameter1=event.target.value
+    text1.innerHTML=selected1.data(parameter1)?selected1.data(parameter1):""
+  });
+
+  dropdown2.addEventListener("change",event=>{
+    parameter2=event.target.value
+    text2.innerHTML=selected2.data(parameter2)?selected2.data(parameter2):""
   });
 
   document.getElementById("group").addEventListener("click", ()=>{
