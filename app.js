@@ -104,8 +104,17 @@ var cy = cytoscape({
         style: {
           "width": 2,
           "line-color": "data(colour)",
-          "curve-style": e=>(e.sourceEndpoint().y>e.targetEndpoint().y?"unbundled-bezier":"bezier"),
-          "control-point-distances":"200 50 200",
+          "curve-style": e=>{if(e.sourceEndpoint().y>e.targetEndpoint().y)
+            {
+              e.source().position("x", e.source().incomers().source().position().x)
+              return "unbundled-bezier"
+            }
+            else
+            {
+              return "straight"
+            }
+          },
+          "control-point-distances":e=>(e.sourceEndpoint().x>e.targetEndpoint().x?"-100 -50 -100":"100 50 100"),
           "target-arrow-shape": "triangle",
           "target-arrow-color": "data(colour)"
         }
