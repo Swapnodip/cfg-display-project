@@ -1943,7 +1943,7 @@ module.exports = expandCollapseUtilities;
     // register the extension cy.expandCollapse()
     cytoscape("core", "expandCollapse", function (opts) {
       var cy = this;
-
+//menu
       var options = getScratch(cy, 'options') || {
         layoutBy: null, // for rearrange after expand/collapse. It's just layout options or whole layout function. Choose your side!
         fisheye: true, // whether to perform fisheye view after expand/collapse you can specify a function too

@@ -18,8 +18,8 @@ document.getElementById('input_file')
 
 function start()
 {
-//console.log(raw);
-let nodes=raw.objects.map(node=>({"data":{"id":"n"+node._gvid, "colour":node.matching?"#00ff00":"#ff0000", "equality_set":node.equality_set, "src":node.src, "src_stronglylive_set":node.src_stronglylive_set, "src_pointsTo_set":node.src_pointsTo_set, "tgt":node.tgt, "tgt_stronglylive_set":node.tgt_stronglylive_set, "tgt_pointsTo_set":node.tgt_pointsTo_set},"group":"nodes"}))
+//Converting data
+let nodes=raw.objects.map(node=>({"data":{"id":"n"+node._gvid, "colour":node.matching?"#00ff00":"#ff0000","label":"SOURCE:\n"+node.src+"\n\nTARGET:\n"+node.tgt, "equality_set":node.equality_set, "src":node.src, "src_stronglylive_set":node.src_stronglylive_set, "src_pointsTo_set":node.src_pointsTo_set, "tgt":node.tgt, "tgt_stronglylive_set":node.tgt_stronglylive_set, "tgt_pointsTo_set":node.tgt_pointsTo_set},"group":"nodes"}))
 let edges=raw.edges.map(edge=>({"data":{"id":"e"+edge._gvid, "source":"n"+edge.tail, "target":"n"+edge.head, "colour":edge.color},"group":"edges"}))
 let gcount=0
 nodes.push({"data":{"id":"g0","name":"group0", "label":"parent group", "colour":nodes[0].data.colour}, "group":"nodes"})
@@ -40,7 +40,7 @@ raw.edges.forEach(e => {
     else
     {
       gcount=gcount+1
-		  nodes.push({"data":{"id":"g"+gcount,"name":"group"+gcount, "label":"parent group", "colour":nodes[e.head].data.colour}, "group":"nodes"})
+		  nodes.push({"data":{"id":"g"+gcount,"label":"group"+gcount, "colour":nodes[e.head].data.colour}, "group":"nodes"})
 		  nodes[e.head].data.parent="g"+gcount
       nodes[e.tail].data.parent="g"+gcount
     }
@@ -50,53 +50,60 @@ raw.edges.forEach(e => {
     if(!nodes[e.head].data.parent)
     {
 		  gcount=gcount+1
-		  nodes.push({"data":{"id":"g"+gcount,"name":"group"+gcount, "label":"parent group", "colour":nodes[e.head].data.colour}, "group":"nodes"})
+		  nodes.push({"data":{"id":"g"+gcount,"label":"group"+gcount, "colour":nodes[e.head].data.colour}, "group":"nodes"})
 		  nodes[e.head].data.parent="g"+gcount
     }
     if(!nodes[e.tail].data.parent)
     {
       gcount=gcount+1
-		  nodes.push({"data":{"id":"g"+gcount,"name":"group"+gcount, "label":"parent group", "colour":nodes[e.tail].data.colour}, "group":"nodes"})
+		  nodes.push({"data":{"id":"g"+gcount,"label":"group"+gcount, "colour":nodes[e.tail].data.colour}, "group":"nodes"})
 		  nodes[e.tail].data.parent="g"+gcount
     }
 	}
 }
 })
 
-//console.log(nodes)
-
 var cy = cytoscape({
     container: document.getElementById("cy"),
+    //Layout
     layout: {
-      /*name:"breadthfirst",
-      directed: true*/
       name: "dagre",
-      nodeSep: 100,
-      rankSep: 20,
+      nodeSep: 200,
+      rankSep: 30,
     },
+    //Style
     style: [
       {
         selector: "node",
         style: {
           "background-color": "data(colour)",
           "text-valign":"center",
-          "content": "data(id)"
+          "content": "data(label)",
+          "compound-sizing-wrt-labels":"include",
+          "text-wrap":"wrap",
+          "font-size":10,
+          "shape":"round-rectangle",
+          "width":200,
+          "height":65,
         }
       },
       {
         selector: ":parent",
         style: {
           "background-opacity": 0.25,
-          "text-valign":"top",
           "content":"",
-          "padding": 16
+          "padding": "25px",
+          "border-color": "#000000",
         }
       },
       {
         selector: "node.cy-expand-collapse-collapsed-node",
         style: {
-          "shape": "rectangle",
-          "background-opacity": 0.5
+          "shape": "ellipse",
+          "background-opacity": 0.5,
+          "font-size":20,
+          "width":100,
+          "height":75
         }
       },
       {
@@ -104,17 +111,6 @@ var cy = cytoscape({
         style: {
           "width": 2,
           "line-color": "data(colour)",
-          "curve-style": e=>{if(e.sourceEndpoint().y>e.targetEndpoint().y)
-            {
-              e.source().position("x", e.source().incomers().source().position().x)
-              return "unbundled-bezier"
-            }
-            else
-            {
-              return "straight"
-            }
-          },
-          "control-point-distances":e=>(e.sourceEndpoint().x>e.targetEndpoint().x?"-100 -50 -100":"100 50 100"),
           "target-arrow-shape": "triangle",
           "target-arrow-color": "data(colour)"
         }
@@ -137,28 +133,53 @@ var cy = cytoscape({
 
     elements: nodes.concat(edges)
 });
+//Base graph rendered
 
+function backFix(){
+  cy.edges().forEach(e=>{
+    if(e.sourceEndpoint().y>e.targetEndpoint().y)
+      {
+        if((e.source().incomers().length==2)&&(e.source().incomers()[1].outgoers().length==2))
+        {
+          e.source().position("x", e.source().incomers()[1].position().x)
+        }
+        e.style("curve-style","unbundled-bezier")
+        e.style("control-point-distances",e=>(e.sourceEndpoint().x>e.targetEndpoint().x?"-250":"250"))
+      }
+      else
+      {
+        e.style("curve-style","straight")
+      }
+  })
+}
+
+//Expand Collapse
   var api = cy.expandCollapse({
     layoutBy: {
       name:"dagre",
-      nodeSep: 100,
-      rankSep: 20,
+      nodeSep: 200,
+      rankSep: 30,
       animate: true,
-      fit: false
+      fit: false,
+      stop: function(){backFix()}
     },
     fisheye: true,
     animate: true,
     undoable: false,
     expandCueImage: "./assets/icon-plus.png",
     collapseCueImage: "./assets/icon-minus.png",
+    expandCollapseCueSize: 20,
     animationDuration:250,
   });
 
+  //Navigator
   cy.navigator({
     container: document.getElementById("cy")
   });
 
+  backFix()
 
+//Event listeners
   var text1=document.getElementById("node_data1")
   var dropdown1=document.getElementById("data_option1")
   var text2=document.getElementById("node_data2")
@@ -166,11 +187,14 @@ var cy = cytoscape({
 
   document.getElementById("collapse").addEventListener("click", () => {
     api.collapseAll()
-    text.innerHTML=""
+    text1.innerHTML=""
+    text2.innerHTML=""
+    cy.fit()
   });
 
   document.getElementById("expand").addEventListener("click", () => {
     api.expandAll()
+    cy.fit()
   });
 
   document.getElementById("zoom_in").addEventListener("click", ()=>{
@@ -179,6 +203,10 @@ var cy = cytoscape({
 
   document.getElementById("zoom_out").addEventListener("click", ()=>{
     cy.zoom({level: cy.zoom()*0.5, renderedPosition:{x:(window.innerWidth*0.6/2), y:(window.innerHeight/2)}})
+  })
+
+  document.getElementById("fit").addEventListener("click",()=>{
+    cy.fit()
   })
 
   var parameter1=dropdown1.value
@@ -193,7 +221,7 @@ var cy = cytoscape({
     text2.innerHTML=event.target.data(parameter2)?event.target.data(parameter2):""
     selected2=event.target
   });
-
+  
   dropdown1.addEventListener("change",event=>{
     parameter1=event.target.value
     text1.innerHTML=selected1.data(parameter1)?selected1.data(parameter1):""
@@ -221,7 +249,7 @@ var cy = cytoscape({
     if(!valid)
     return
     gcount=gcount+1
-    cy.add({"data":{"id":"g"+gcount,"name":"group"+gcount, "label":"parent group", "colour":members[0].data("colour"), "parent":oldparent}})
+    cy.add({"data":{"id":"g"+gcount,"label":"group"+gcount, "colour":members[0].data("colour"), "parent":oldparent}})
     members.move({parent:"g"+gcount})
   });
 }
