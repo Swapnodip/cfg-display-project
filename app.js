@@ -21,7 +21,7 @@ function start()
 //Converting data
 let nodes=raw.objects.map(node=>({"data":{"id":"n"+node._gvid, "colour":node.matching?"#00ff00":"#ff0000","label":"SOURCE:\n"+node.src+"\n\nTARGET:\n"+node.tgt, "equality_set":node.equality_set, "src":node.src, "src_stronglylive_set":node.src_stronglylive_set, "src_pointsTo_set":node.src_pointsTo_set, "tgt":node.tgt, "tgt_stronglylive_set":node.tgt_stronglylive_set, "tgt_pointsTo_set":node.tgt_pointsTo_set},"group":"nodes"}))
 let edges=raw.edges.map(edge=>({"data":{"id":"e"+edge._gvid, "source":"n"+edge.tail, "target":"n"+edge.head, "colour":edge.color},"group":"edges"}))
-let gcount=0
+/*let gcount=0
 nodes.push({"data":{"id":"g0","name":"group0", "label":"parent group", "colour":nodes[0].data.colour}, "group":"nodes"})
 nodes[0].data.parent="g0"
 raw.edges.forEach(e => {
@@ -61,7 +61,7 @@ raw.edges.forEach(e => {
     }
 	}
 }
-})
+})*/
 
 var cy = cytoscape({
     container: document.getElementById("cy"),
@@ -135,6 +135,54 @@ var cy = cytoscape({
 });
 //Base graph rendered
 
+//Grouping of nodes
+let gcount=0
+cy.edges().forEach(e => {
+  if(!(e.source().data("parent")&&e.target().data("parent")))
+  {
+	if(e.source().data("colour")==e.target().data("colour"))
+	{
+    if(e.source().data("parent"))
+    {
+		  e.target().move({parent: e.source().data("parent")})
+    }
+    else if(e.target().data("parent"))
+    {
+      e.source().move({parent: e.target().data("parent")})
+    }
+    else
+    {
+      gcount=gcount+1
+		  cy.add({"data":{"id":"g"+gcount,"label":"group"+gcount, "colour":e.target().data("colour")}, "group":"nodes"})
+		  e.target().move({parent:"g"+gcount})
+      e.source().move({parent:"g"+gcount})
+    }
+	}
+	else
+	{
+    if(!e.target().data("parent"))
+    {
+		  gcount=gcount+1
+		  cy.add({"data":{"id":"g"+gcount,"label":"group"+gcount, "colour":e.target().data("colour")}, "group":"nodes"})
+		  e.target().move({parent:"g"+gcount})
+    }
+    if(!e.source().data("parent"))
+    {
+      gcount=gcount+1
+		  cy.add({"data":{"id":"g"+gcount,"label":"group"+gcount, "colour":e.source().data("colour")}, "group":"nodes"})
+		  e.source().move({parent:"g"+gcount})
+    }
+	}
+}
+})
+
+//Removing parents of single nodes
+cy.nodes(":parent").filter(n=>(n.children().length<2)).map(ele=>{
+  ele.children().move({parent:null})
+  ele.remove()
+})
+
+//Backfix function
 function backFix(){
   cy.edges().forEach(e=>{
     if(e.sourceEndpoint().y>e.targetEndpoint().y)
@@ -160,7 +208,9 @@ function backFix(){
       nodeSep: 200,
       rankSep: 30,
       animate: true,
+      animationDuration: 400,
       fit: false,
+      ranker:"tight-tree",
       stop: function(){backFix()}
     },
     fisheye: true,
@@ -169,7 +219,7 @@ function backFix(){
     expandCueImage: "./assets/icon-plus.png",
     collapseCueImage: "./assets/icon-minus.png",
     expandCollapseCueSize: 20,
-    animationDuration:250,
+    animationDuration:300,
   });
 
   //Navigator
@@ -177,7 +227,7 @@ function backFix(){
     container: document.getElementById("cy")
   });
 
-  backFix()
+  api.expandAll()
 
 //Event listeners
   var text1=document.getElementById("node_data1")
@@ -189,12 +239,12 @@ function backFix(){
     api.collapseAll()
     text1.innerHTML=""
     text2.innerHTML=""
-    cy.fit()
+    setTimeout(function(){cy.fit()}, 800)
   });
 
   document.getElementById("expand").addEventListener("click", () => {
     api.expandAll()
-    cy.fit()
+    setTimeout(function(){cy.fit()}, 900)
   });
 
   document.getElementById("zoom_in").addEventListener("click", ()=>{
