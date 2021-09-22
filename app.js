@@ -19,49 +19,8 @@ document.getElementById('input_file')
 function start()
 {
 //Converting data
-let nodes=raw.objects.map(node=>({"data":{"id":"n"+node._gvid, "colour":node.matching?"#00ff00":"#ff0000","label":"SOURCE:\n"+node.src+"\n\nTARGET:\n"+node.tgt, "equality_set":node.equality_set, "src":node.src, "src_stronglylive_set":node.src_stronglylive_set, "src_pointsTo_set":node.src_pointsTo_set, "tgt":node.tgt, "tgt_stronglylive_set":node.tgt_stronglylive_set, "tgt_pointsTo_set":node.tgt_pointsTo_set},"group":"nodes"}))
+let nodes=raw.objects.map(node=>({"data":{"id":"n"+node._gvid, "colour":node.matching?"#00ff00":"#ff0000","label":"SOURCE:\n"+node.src+"\n\nTARGET:\n"+node.tgt, "equality_set":node.equality_set, "src_stronglylive_set":node.src_stronglylive_set, "src_pointsTo_set":node.src_pointsTo_set, "tgt_stronglylive_set":node.tgt_stronglylive_set, "tgt_pointsTo_set":node.tgt_pointsTo_set},"group":"nodes"}))
 let edges=raw.edges.map(edge=>({"data":{"id":"e"+edge._gvid, "source":"n"+edge.tail, "target":"n"+edge.head, "colour":edge.color},"group":"edges"}))
-/*let gcount=0
-nodes.push({"data":{"id":"g0","name":"group0", "label":"parent group", "colour":nodes[0].data.colour}, "group":"nodes"})
-nodes[0].data.parent="g0"
-raw.edges.forEach(e => {
-  if(!(nodes[e.tail].data.parent&&nodes[e.head].data.parent))
-  {
-	if(nodes[e.tail].data.colour==nodes[e.head].data.colour)
-	{
-    if(nodes[e.tail].data.parent)
-    {
-		  nodes[e.head].data.parent=nodes[e.tail].data.parent
-    }
-    else if(nodes[e.head].data.parent)
-    {
-      nodes[e.tail].data.parent=nodes[e.head].data.parent
-    }
-    else
-    {
-      gcount=gcount+1
-		  nodes.push({"data":{"id":"g"+gcount,"label":"group"+gcount, "colour":nodes[e.head].data.colour}, "group":"nodes"})
-		  nodes[e.head].data.parent="g"+gcount
-      nodes[e.tail].data.parent="g"+gcount
-    }
-	}
-	else
-	{
-    if(!nodes[e.head].data.parent)
-    {
-		  gcount=gcount+1
-		  nodes.push({"data":{"id":"g"+gcount,"label":"group"+gcount, "colour":nodes[e.head].data.colour}, "group":"nodes"})
-		  nodes[e.head].data.parent="g"+gcount
-    }
-    if(!nodes[e.tail].data.parent)
-    {
-      gcount=gcount+1
-		  nodes.push({"data":{"id":"g"+gcount,"label":"group"+gcount, "colour":nodes[e.tail].data.colour}, "group":"nodes"})
-		  nodes[e.tail].data.parent="g"+gcount
-    }
-	}
-}
-})*/
 
 var cy = cytoscape({
     container: document.getElementById("cy"),
@@ -182,6 +141,50 @@ cy.nodes(":parent").filter(n=>(n.children().length<2)).map(ele=>{
   ele.remove()
 })
 
+//Setting group attributes
+cy.nodes(":parent").forEach(
+  p=>{
+    var eqs,sp2,tp2,ssl,tsl
+    p.children().forEach(
+      n=>{
+        if(n.outgoers().filter(ele=>((ele.isNode())&&(ele.parent()!=p))).length>0)
+        {
+          if(sp2)
+          {
+            sp2="undefined"
+            tp2="undefined"
+          }
+          else
+          {
+            sp2=n.data("src_pointsTo_set")
+            tp2=n.data("tgt_pointsTo_set")
+          }
+        }
+        if(n.incomers().filter(ele=>((ele.isNode())&&(ele.parent()!=p))).length>0)
+        {
+          if(eqs)
+          {
+            eqs="undefined"
+            ssl="undefined"
+            tsl="undefined"
+          }
+          else
+          {
+            eqs=n.data("equality_set")
+            ssl=n.data("src_stronglylive_set")
+            tsl=n.data("tgt_stronglylive_set")
+          }
+        }
+      }
+    )
+    p.data("src_pointsTo_set", sp2)
+    p.data("tgt_pointsTo_set", tp2)
+    p.data("equality_set", eqs)
+    p.data("src_stronglylive_set", ssl)
+    p.data("tgt_stronglylive_set", tsl)
+  }
+)
+
 //Backfix function
 function backFix(){
   cy.edges().forEach(e=>{
@@ -284,6 +287,7 @@ function backFix(){
 
   document.getElementById("group").addEventListener("click", ()=>{
     const members=cy.nodes(":selected")
+    var eqs,sp2,tp2,ssl,tsl
     if(members.length==0)
     return
     const oldparent=members[0].data("parent")
@@ -295,11 +299,39 @@ function backFix(){
         valid=false
         return
       }
+      if(n.outgoers().filter(ele=>(ele.isNode()&&!(ele.selected()))).length>0)
+      {
+        if(sp2)
+          {
+            sp2="undefined"
+            tp2="undefined"
+          }
+          else
+          {
+            sp2=n.data("src_pointsTo_set")
+            tp2=n.data("tgt_pointsTo_set")
+          }
+      }
+      if(n.incomers().filter(ele=>(ele.isNode()&&!(ele.selected()))).length>0)
+      {
+        if(eqs)
+          {
+            eqs="undefined"
+            ssl="undefined"
+            tsl="undefined"
+          }
+          else
+          {
+            eqs=n.data("equality_set")
+            ssl=n.data("src_stronglylive_set")
+            tsl=n.data("tgt_stronglylive_set")
+          }
+      }
     });
     if(!valid)
     return
     gcount=gcount+1
-    cy.add({"data":{"id":"g"+gcount,"label":"group"+gcount, "colour":members[0].data("colour"), "parent":oldparent}})
+    cy.add({"data":{"id":"g"+gcount,"label":"group"+gcount, "colour":members[0].data("colour"), "parent":oldparent, "equality_set":eqs, "src_stronglylive_set":ssl, "src_pointsTo_set":sp2, "tgt_stronglylive_set":tsl, "tgt_pointsTo_set":tp2 }, "group":"nodes"})
     members.move({parent:"g"+gcount})
   });
 }
