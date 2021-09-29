@@ -1,21 +1,37 @@
-body {
+#container {
   font-family: arial;
   font-size: 16px;
+  display: flex;
+  flex-direction: row;
+  height: fit-content;
+  height: 100%;
 }
 
 .menu {
-  float:inline-start;
   width: 20%;
+  order: 1;
+  flex-direction: column;
+  flex-grow: 1;
   height: calc(100%-25px);
   padding-top: 25px;
 }
 
 .graph {
-  float:left;
   height: 99%;
   width: calc(60% - 4px);
+  order: 2;
+  flex-grow: 1;
   border: 2px solid black;
   border-radius: 5px;
+}
+
+.menu2 {
+  padding-top: 315px;
+  order: 3;
+  flex-direction: column;
+  flex-grow: 1;
+  width: 20%;
+  height: 50%;
 }
 
 button {
@@ -55,15 +71,8 @@ label {
 }
 
 hr {
-  width:90%;
-  margin:10 0 10 0
-}
-
-.menu2 {
-  padding-top: 315px;
-  float:inline-end;
-  width: 20%;
-  height: 50%;
+  width: 90%;
+  margin: 10 0 10 0;
 }
 
 #node_data2 {
@@ -80,5 +89,5 @@ hr {
   right: 22%;
   width: auto;
   height: auto;
-  z-index: 999;
+  z-index: 9999;
 }
