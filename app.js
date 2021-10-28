@@ -12,18 +12,16 @@ document.getElementById("input_file").addEventListener("change", function () {
 });
 
 function start() {
+
+  //Setting up dropdown
+  document.getElementById("data_option1").innerHTML=Object.keys(raw.objects[0]).map(k=>(
+    "<option value="+k+">"+k+"</option>"
+  ))
+  document.getElementById("data_option2").innerHTML=document.getElementById("data_option1").innerHTML
+
   //Converting data
   let nodes = raw.objects.map((node) => ({
-    data: {
-      id: "n" + node._gvid,
-      colour: node.matching ? "#00ff00" : "#ff0000",
-      label: "SOURCE:\n" + node.src + "\n\nTARGET:\n" + node.tgt,
-      equality_set: node.equality_set,
-      src_stronglylive_set: node.src_stronglylive_set,
-      src_pointsTo_set: node.src_pointsTo_set,
-      tgt_stronglylive_set: node.tgt_stronglylive_set,
-      tgt_pointsTo_set: node.tgt_pointsTo_set,
-    },
+    data: node,
     group: "nodes",
   }));
   let edges = raw.edges.map((edge) => ({
@@ -35,6 +33,12 @@ function start() {
     },
     group: "edges",
   }));
+
+  nodes.forEach(n=>{
+    n.data.id="n"+n.data._gvid
+    n.data.colour=n.data.matching?"#00ff00":"#ff0000"
+    n.data.label="SOURCE:\n"+n.data.src+"\n\nTARGET:\n"+n.data.tgt
+  })
 
   var cy = cytoscape({
     container: document.getElementById("cy"),
