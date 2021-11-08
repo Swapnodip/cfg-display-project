@@ -4,6 +4,33 @@
  	"strict": false, 
  	"orientation": "Portrait",
  	"_subgraph_cnt": 0, 
+	"config": {
+		"attributes": {
+			"_gvid" : {},
+			"src" : {},
+			"tgt": {},
+			"src_pointsTo_set" : {
+				"group_rep": "exit"
+			},
+			"tg_pointsTo_set": {
+				"group_rep": "exit"
+			},
+			"src_stronglylive_set" : {
+				"group_rep": "entry"
+			},
+			"tgt_stronglylive_set": {
+				"group_rep": "entry"
+			},
+			"equality_set" : {
+				"group_rep": "entry"
+			}
+		},
+		"node_label": [
+			"_gvid",
+			"src",
+			"tgt"
+		]
+	},
  	"objects": [
  	 {
 		"_gvid" : "0",

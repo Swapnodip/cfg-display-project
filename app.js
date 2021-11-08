@@ -1,4 +1,4 @@
-var raw = { objects: [], edges: [] };
+var raw = { "objects": [], "edges": [] };
 
 document.getElementById("input_file").addEventListener("change", function () {
   var fr = new FileReader();
@@ -13,8 +13,24 @@ document.getElementById("input_file").addEventListener("change", function () {
 
 function start() {
 
+  //Configuration
+  const config=raw.config
+  var entry_attr
+  var exit_attr
+  const label_list=config.node_label?config.node_label:["src","tgt"]
+  if(config)
+  {
+    entry_attr=Object.keys(config.attributes).filter(a=>(config.attributes[a].group_rep=="entry"))
+    exit_attr=Object.keys(config.attributes).filter(a=>(config.attributes[a].group_rep=="exit"))
+  }
+  else
+  {
+    exit_attr=["src_pointsTo_set","tgt_pointsTo_set"]
+    entry_attr=["equality_set","src_stronglylive_set","tgt_stronglylive_set"]
+  }
+
   //Setting up dropdown
-  document.getElementById("data_option1").innerHTML=Object.keys(raw.objects[0]).map(k=>(
+  document.getElementById("data_option1").innerHTML=Object.keys(config?config.attributes:raw.objects[0]).map(k=>(
     "<option value="+k+">"+k+"</option>"
   ))
   document.getElementById("data_option2").innerHTML=document.getElementById("data_option1").innerHTML
@@ -37,7 +53,7 @@ function start() {
   nodes.forEach(n=>{
     n.data.id="n"+n.data._gvid
     n.data.colour=n.data.matching?"#00ff00":"#ff0000"
-    n.data.label="SOURCE:\n"+n.data.src+"\n\nTARGET:\n"+n.data.tgt
+    n.data.label=label_list.map(l=>(l.toUpperCase()+":\n"+n.data[l])).join("\n\n") //"SOURCE:\n"+n.data.src+"\n\nTARGET:\n"+n.data.tgt
   })
 
   var cy = cytoscape({
@@ -61,7 +77,7 @@ function start() {
           "font-size": 10,
           shape: "round-rectangle",
           width: 200,
-          height: 65,
+          height: 35*label_list.length,
         },
       },
       {
@@ -70,7 +86,6 @@ function start() {
           "background-opacity": 0.25,
           content: "",
           padding: "25px",
-          "border-color": "#000000",
         },
       },
       {
@@ -173,40 +188,38 @@ function start() {
 
   //Setting group attributes
   cy.nodes(":parent").forEach((p) => {
-    var eqs, sp2, tp2, ssl, tsl;
     p.children().forEach((n) => {
       if (
         n.outgoers().filter((ele) => ele.isNode() && ele.parent() != p).length >
         0
       ) {
-        if (sp2) {
-          ssl = "undefined";
-          tsl = "undefined";
-        } else {
-          ssl = n.data("src_stronglylive_set");
-          tsl = n.data("tgt_stronglylive_set");
-        }
+        exit_attr.forEach(a=>{
+          if(p.data(a))
+          {
+            p.data(a,"undefined")
+          }
+          else
+          {
+            p.data(a,n.data(a))
+          }
+        })
       }
       if (
         n.incomers().filter((ele) => ele.isNode() && ele.parent() != p).length >
         0
       ) {
-        if (eqs) {
-          eqs = "undefined";
-          sp2 = "undefined";
-          tp2 = "undefined";
-        } else {
-          eqs = n.data("equality_set");
-          sp2 = n.data("src_pointsTo_set");
-          tp2 = n.data("tgt_pointsTo_set");
-        }
+        entry_attr.forEach(a=>{
+          if(p.data(a))
+          {
+            p.data(a,"undefined")
+          }
+          else
+          {
+            p.data(a,n.data(a))
+          }
+        })
       }
     });
-    p.data("src_pointsTo_set", sp2);
-    p.data("tgt_pointsTo_set", tp2);
-    p.data("equality_set", eqs);
-    p.data("src_stronglylive_set", ssl);
-    p.data("tgt_stronglylive_set", tsl);
   });
 
   //Backfix function
@@ -270,6 +283,8 @@ function start() {
   var text2 = document.getElementById("node_data2");
   var dropdown2 = document.getElementById("data_option2");
 
+  //Expand and Collapse all
+
   document.getElementById("collapse").addEventListener("click", () => {
     api.collapseAll();
     text1.innerHTML = "";
@@ -285,6 +300,8 @@ function start() {
       cy.fit();
     }, 900);
   });
+
+  //Zoom
 
   document.getElementById("zoom_in").addEventListener("click", () => {
     cy.zoom({
@@ -311,41 +328,48 @@ function start() {
   });
 
   var parameter1 = dropdown1.value;
-  var selected1 = {};
+  var selected = cy;
   var parameter2 = dropdown2.value;
-  var selected2 = {};
+
+  //Show attributes
 
   cy.on("tap", (event) => {
     text1.innerHTML = event.target.data(parameter1)
       ? event.target.data(parameter1)
       : "";
-    selected1 = event.target;
+    selected = event.target;
     text2.innerHTML = event.target.data(parameter2)
       ? event.target.data(parameter2)
       : "";
-    selected2 = event.target;
   });
 
   dropdown1.addEventListener("change", (event) => {
     parameter1 = event.target.value;
-    text1.innerHTML = selected1.data(parameter1)
-      ? selected1.data(parameter1)
+    text1.innerHTML = selected.data(parameter1)
+      ? selected.data(parameter1)
       : "";
   });
 
   dropdown2.addEventListener("change", (event) => {
     parameter2 = event.target.value;
-    text2.innerHTML = selected2.data(parameter2)
-      ? selected2.data(parameter2)
+    text2.innerHTML = selected.data(parameter2)
+      ? selected.data(parameter2)
       : "";
   });
 
+  //Grouping
+
   document.getElementById("group").addEventListener("click", () => {
     const members = cy.nodes(":selected");
-    var eqs, sp2, tp2, ssl, tsl;
     if (members.length == 0) return;
     const oldparent = members[0].data("parent");
     let valid = true;
+    let data={
+      id: "g" + (gcount+1),
+      label: "group" + (gcount+1),
+      colour: members[0].data("colour"),
+      parent: oldparent
+    }
     members.forEach((n) => {
       if (n.data("parent") != oldparent) {
         if (valid) alert("Cannot make group");
@@ -355,42 +379,36 @@ function start() {
       if (
         n.outgoers().filter((ele) => ele.isNode() && !ele.selected()).length > 0
       ) {
-        if (ssl) {
-          ssl = "undefined";
-          tsl = "undefined";
-        } else {
-          ssl = n.data("src_stronglylive_set");
-          tsl = n.data("tgt_stronglylive_set");
-        }
+        exit_attr.forEach(a=>{
+          if(data[a])
+          {
+            data[a]="undefined"
+          }
+          else
+          {
+            data[a]=n.data(a)
+          }
+        })
       }
       if (
         n.incomers().filter((ele) => ele.isNode() && !ele.selected()).length > 0
       ) {
-        if (eqs) {
-          eqs = "undefined";
-          sp2 = "undefined";
-          tp2 = "undefined";
-        } else {
-          eqs = n.data("equality_set");
-          sp2 = n.data("src_pointsTo_set");
-          tp2 = n.data("tgt_pointsTo_set");
-        }
+        entry_attr.forEach(a=>{
+          if(data[a])
+          {
+            data[a]="undefined"
+          }
+          else
+          {
+            data[a]=n.data(a)
+          }
+        })
       }
     });
     if (!valid) return;
     gcount = gcount + 1;
     cy.add({
-      data: {
-        id: "g" + gcount,
-        label: "group" + gcount,
-        colour: members[0].data("colour"),
-        parent: oldparent,
-        equality_set: eqs,
-        src_stronglylive_set: ssl,
-        src_pointsTo_set: sp2,
-        tgt_stronglylive_set: tsl,
-        tgt_pointsTo_set: tp2,
-      },
+      data: data,
       group: "nodes",
     });
     members.move({ parent: "g" + gcount });
@@ -412,4 +430,42 @@ function start() {
     });
     layout.run();
   });
+
+  //Search
+
+  const search=()=>{
+    cy.nodes().style("border-width",0)
+    const searching=document.getElementById("search_bar").value
+    let found=false
+    cy.nodes().forEach(n=>{
+      if((n.data(parameter1))&&(n.data(parameter1).includes(searching)))
+      {
+        found=true
+        n.style("border-opacity",1)
+        n.style("border-color","yellow")
+        n.style("border-width",10)
+      }
+    })
+    if(!found)
+      {
+        alert("Not found")
+      }
+  }
+
+  document.getElementById("search_button").addEventListener("click", ()=>{
+    search()
+  })
+
+  document.getElementById("search_bar").addEventListener("keydown",e=>{
+    if(e.code==="Enter")
+    {
+      search()
+    }
+  })
+
+  document.getElementById("clear").addEventListener("click",()=>{
+    cy.nodes().style("border-width",0)
+    document.getElementById("search_bar").value=""
+  })
+  
 }
