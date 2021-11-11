@@ -17,7 +17,7 @@ function start() {
   const config=raw.config
   var entry_attr
   var exit_attr
-  const label_list=config.node_label?config.node_label:["src","tgt"]
+  const label_list=(config&&config.node_label)?config.node_label:["src","tgt"]
   if(config)
   {
     entry_attr=Object.keys(config.attributes).filter(a=>(config.attributes[a].group_rep=="entry"))
